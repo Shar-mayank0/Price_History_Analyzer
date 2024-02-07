@@ -2,9 +2,10 @@
   "name": "price_pattern_analyzer",
   "version": "1.0.0",
   "description": "a chrome extention which gets the price history of a project and analyze it through machine learning and alerts the user if there is any malicious price manupilation",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/index.js"
   },
   "keywords": [
     "Javascript",
@@ -15,5 +16,9 @@
     "extention"
   ],
   "author": "Mayank Sharma",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "i": "^0.3.7",
+    "nodemon": "^3.0.3"
+  }
 }
