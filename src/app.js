@@ -18,4 +18,10 @@ app.use(express.urlencoded({
 }));
 app.use(express.static("public"));
 app.use(cookieParser());
+
+ // Import ApiExt.routes module
+import apiExtRouter  from "./routes/ApiExt.routes.js";
+
+app.use("/api/v1/ext", apiExtRouter);
+
 export { app } 
