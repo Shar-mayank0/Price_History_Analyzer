@@ -3,7 +3,6 @@ import {ApiUrl} from "../models/ApiUrl.model.js";
 import { apiError } from "../utils/ApiError.js";
 
 const registerProduct = asynchandler(async (req, res) => {
-        res.json({ message: "Product registered" });
         const body = req.body;
         console.log(body);
         const newProduct = {
