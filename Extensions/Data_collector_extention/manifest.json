@@ -1,0 +1,24 @@
+{
+    "manifest_version": 3,
+    "name": "Training data collector for the AI model",
+    "version": "0.0.1",
+    "permissions": [
+        "storage",
+        "activeTab",
+        "tabs"
+    ],
+    "host_permissions": [
+        "http://localhost:3000/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "images/images/get_started16.png",
+            "48": "images/images/get_started48.png",
+            "128": "images/images/get_started128.png"
+        }
+    }
+}
