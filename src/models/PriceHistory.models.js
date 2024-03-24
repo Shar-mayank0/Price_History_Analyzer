@@ -15,13 +15,26 @@ const PriceHistorySchema = new Schema({
         index: true
     },
     price: {
-        type: Number,
+        type: [Number],
         required: true
     },
     date: {
-        type: Date,
+        type: [Date],
+        required: true
+    },
+    highst: {
+        type: [Number],
+        required: true
+    },
+    lowst: {
+        type: [Number],
+        required: true
+    },
+    ymin: {
+        type: Number,
         required: true
     }
+
 });
 
 // Create a new model for the PriceHistorySchema and export it

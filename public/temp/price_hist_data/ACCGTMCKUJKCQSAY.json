@@ -1,0 +1,29 @@
+{
+    "dates": [
+        "20 Mar 2024",
+        "21 Mar 2024",
+        "22 Mar 2024",
+        "23 Mar 2024"
+    ],
+    "prices": [
+        6999,
+        6999,
+        6999,
+        6999
+    ],
+    "lowestPrices": [
+        6999,
+        6999,
+        6999,
+        6999
+    ],
+    "highestPrices": [
+        6999,
+        6999,
+        6999,
+        6999
+    ],
+    "yAxisTicksMin": 4000,
+    "site": "flipkart",
+    "prod_id": "ACCGTMCKUJKCQSAY"
+}

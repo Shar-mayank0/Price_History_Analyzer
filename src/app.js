@@ -21,6 +21,9 @@ app.use(cookieParser());
 
  // Import ApiExt.routes module
 import apiExtRouter  from "./routes/ApiExt.routes.js";
+import historyServer  from "./routes/priceHistory.routes.js";
+
+app.use("/api/v1/historyserver",historyServer );
 
 app.use("/api/v1/ext", apiExtRouter);
 
