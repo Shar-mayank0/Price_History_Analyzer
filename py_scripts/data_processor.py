@@ -7,7 +7,7 @@ from web_page_info_collect_Parser import WebPageInfoCollectAndParser
 from web_page_info_collect_Parser import flipkart_prod_list
 from web_page_info_collect_Parser import amazon_prod_list
 
-def prod_id():
+def prod_id(): 
     for entry in flipkart_prod_list:
         filename = entry
         yield filename
