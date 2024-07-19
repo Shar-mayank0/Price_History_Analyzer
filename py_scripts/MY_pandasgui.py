@@ -16,18 +16,17 @@ def datafrm_setup(data):
 
             # Create a DataFrame with the dates and prices
             df = pd.DataFrame({
-                'dates': pd.to_datetime(dates),
+                'dates': pd.to_datetime(dates, format="%d %b %Y"),
                 'prices': prices
             })
 
             # Set the dates as the index of the DataFrame
             df.set_index('dates', inplace=True)
-            print(df)
 
             # Resample the data to 1-month, 2-month, 3-month intervals and calculate the mode for each interval
-            M1modedf = df.resample('M').apply(lambda x: stats.mode(x)[0])
-            M2modedf = df.resample('2M').apply(lambda x: stats.mode(x)[0])
-            M3modedf = df.resample('3M').apply(lambda x: stats.mode(x)[0])
+            M1modedf = df.resample('ME').apply(lambda x: stats.mode(x)[0])
+            M2modedf = df.resample('2ME').apply(lambda x: stats.mode(x)[0])
+            M3modedf = df.resample('3ME').apply(lambda x: stats.mode(x)[0])
 
             # Reset the index of modedf to prepare for merging
             M1modedf = M1modedf.reset_index()
@@ -44,30 +43,40 @@ def datafrm_setup(data):
             df = pd.merge(df, M2modedf, on='dates', how='left')
             df = pd.merge(df, M3modedf, on='dates', how='left')
 
-            #Fill NaN values with forward fill
-            df['Regular'].fillna(method='ffill', inplace=True) # type: ignore
-            df['Long_regular'].fillna(method='ffill', inplace=True) # type: ignore
-            df['Actual_price'].fillna(method='ffill', inplace=True) # type: ignore
+            # Fill NaN values with forward fill
+            df.loc[:, 'Regular'] = df['Regular'].ffill()
+            df.loc[:, 'Long_regular'] = df['Long_regular'].ffill()
+            df.loc[:, 'Actual_price'] = df['Actual_price'].ffill()
+
+            # Calculate max discount%
+            df['max_discount%'] = (df['prices'].max() - df['prices']) / df['prices'].max() * 100
+
+            # Calculate actual discount%
+            df['actual_discount%'] = (df['Actual_price'] - df['prices']) / df['Actual_price'] * 100
+
+            # Calculate discount discrepancy
+            df['discount_discrepancy'] = df['max_discount%'] - df['actual_discount%']
+
+            # Calculate moving average
+            window_size = 30
+            df['moving_average'] = df['prices'].rolling(window=window_size).mean()
+
+            # Calculate abnormal price spikes
+            threshold = 2 * df['prices'].std()
+            df['abnormal_price_spikes'] = (df['prices'] - df['moving_average']) > threshold
+
+            # Calculate price volatility for 1M, 2M, 3M, and all time
+            df['price_volatility_1M'] = df['prices'].rolling(window=30).std()
+            df['price_volatility_2M'] = df['prices'].rolling(window=60).std()
+            df['price_volatility_3M'] = df['prices'].rolling(window=90).std()
+            df['price_volatility_all_time'] = df['prices'].std()
+
+            # Calculate threshold for 1M, 2M, 3M
+            df['threshold_1M'] = 2 * df['price_volatility_1M']
+            df['threshold_2M'] = 2 * df['price_volatility_2M']
+            df['threshold_3M'] = 2 * df['price_volatility_3M']
 
             print(df)
-            df['actual_discount'] = (df['Actual_price'] - df['prices']) / df['Actual_price'] * 100
-            df = df.dropna()
-            # Feature Engineering
-            # Discount Discrepancy
-            df['discount_discrepancy'] = (df['Actual_price'] - df['prices']) / df['Actual_price']
-
-            # Price Volatility
-            price_volatility = df['prices'].std()  # Compute standard deviation as a measure of volatility
-
-            # Price Trends
-            # For simplicity, let's calculate a simple moving average of prices over a specific window size
-            window_size = 30
-            df['price_moving_average'] = df['prices'].rolling(window=window_size).mean()
-
-            # Abnormal Price Spikes
-            # Define a threshold for abnormal price spikes based on historical data
-            threshold = 2 * price_volatility  # For example, two times the standard deviation
-            df['abnormal_price_spike'] = (df['prices'] - df['price_moving_average']) > threshold
             return df
 
 
