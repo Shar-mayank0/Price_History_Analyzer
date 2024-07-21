@@ -115,30 +115,26 @@ combined_df['anomaly_dbscan'] = combined_df['cluster'] == -1
 # Apply Isolation Forest for anomaly detection
 iso_forest = IsolationForest(contamination=0.1, random_state=42)
 combined_df['anomaly_iso_forest'] = iso_forest.fit_predict(features_scaled) == -1
-# Create a folder named 'results' if it doesn't exist
-results_folder = 'results'
-if not os.path.exists(results_folder):
-    os.makedirs(results_folder)
-
-# Save the entire DataFrame as an Excel sheet
-excel_file_path = os.path.join(results_folder, 'dataframe.xlsx')
-combined_df.to_excel(excel_file_path, index=False)
-
 
 # Visualizing Anomalies Detected by DBSCAN
 plt.figure(figsize=(15, 8))
 for product_id, product_df in combined_df.groupby('product_id'):
+    plt.figure(figsize=(15, 8))  # Create a new figure for each product
     plt.plot(product_df.index, product_df['prices'], label=f'Price - {product_id}')
     plt.scatter(product_df.index[product_df['anomaly_dbscan']], product_df['prices'][product_df['anomaly_dbscan']], label=f'DBSCAN Anomaly - {product_id}')
-plt.legend()
-plt.title('Price History with DBSCAN Anomalies')
-plt.show()
+    plt.legend()
+    plt.title(f'Price History with DBSCAN Anomalies - {product_id}')
+    plt.show()
 
 # Visualizing Anomalies Detected by Isolation Forest
 plt.figure(figsize=(15, 8))
 for product_id, product_df in combined_df.groupby('product_id'):
+    plt.figure(figsize=(15, 8))  # Create a new figure for each product
     plt.plot(product_df.index, product_df['prices'], label=f'Price - {product_id}')
     plt.scatter(product_df.index[product_df['anomaly_iso_forest']], product_df['prices'][product_df['anomaly_iso_forest']], label=f'Isolation Forest Anomaly - {product_id}')
+    plt.legend()
+    plt.title(f'Price History with Isolation Forest Anomalies - {product_id}')
+    plt.show()
 plt.legend()
 plt.title('Price History with Isolation Forest Anomalies')
 plt.show()
