@@ -6,9 +6,12 @@ from scipy import stats
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
+from sklearn.metrics import silhouette_score, f1_score
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import tkinter as tk
 from tkinter import filedialog
+from joblib import Parallel, delayed
 # Function to setup DataFrame and engineer features
 def datafrm_setup(dates, prices):
     # Create a DataFrame with the dates and prices
@@ -75,6 +78,11 @@ def datafrm_setup(dates, prices):
     threshold = 2 * price_volatility  # For example, two times the standard deviation
     df['abnormal_price_spike'] = (df['prices'] - df['price_moving_average']) > threshold
 
+    df['price_change_freq'] = df['prices'].diff().ne(0).rolling(window=30).sum()
+    df['price_variance'] = df['prices'].rolling(window=30).std()
+    df['price_reversions'] = df['prices'].diff().abs().rolling(window=30).sum() / df['prices']
+
+
     return df
 
 # Path to JSON files
@@ -99,42 +107,102 @@ for file_name in os.listdir(json_files_path):
 combined_df = pd.concat(dataframes)
 
 # Extract relevant features for clustering
-features = combined_df[['prices', 'actual_discount', 'discount_discrepancy', 'price_moving_average', 'abnormal_price_spike']].fillna(0).values
+features = combined_df[['prices', 'actual_discount', 'discount_discrepancy', 'price_moving_average', 'abnormal_price_spike', 'price_change_freq', 'price_variance', 'price_reversions']].fillna(0).values
 
 # Normalize the features
 scaler = StandardScaler()
 features_scaled = scaler.fit_transform(features)
+best_eps = 0.01
+best_min_samples = 1
+best_score = -1
 
-# Apply DBSCAN for anomaly detection
-db = DBSCAN(eps=0.5, min_samples=5).fit(features_scaled)
+# Apply DBSCAN for anomaly detection and clustering and find the best hyperparameters
+# def find_best_dbscan(eps, min_samples):
+#     eps = eps / 100
+#     db = DBSCAN(eps=eps, min_samples=min_samples).fit(features_scaled)
+#     if len(set(db.labels_)) > 1:  # Ensure there is more than one cluster
+#         score = silhouette_score(features_scaled, db.labels_)
+#         return eps, min_samples, score
+
+# results = Parallel(n_jobs=6, backend='threading')(delayed(find_best_dbscan)(eps, min_samples) for eps in range(1, 100, 1) for min_samples in range(1, 10, 1))
+# # Filter out None values from results
+# filtered_results = [result for result in results if result is not None]
+
+# # Ensure filtered_results is not empty to avoid ValueError from max()
+# if filtered_results:
+#     # Find the tuple with the maximum score
+#     best_tuple = max(filtered_results, key=lambda x: x[2])
+
+#     # Extract the best eps and min_samples values
+#     best_eps = best_tuple[0] * 100  # Multiplying by 100 to revert the earlier division
+#     best_min_samples = best_tuple[1]
+
+#     print(f'Best DBSCAN eps: {best_eps}, min_samples: {best_min_samples}, Silhouette Score: {best_tuple[2]}')
+# else:
+#     print("No suitable parameters found for DBSCAN.")
+# print(f'Best DBSCAN eps: {best_eps}, min_samples: {best_min_samples}, Silhouette Score: {best_score}')
+
+
+
+db = DBSCAN(eps=0.25, min_samples=4).fit(features_scaled)
 combined_df['cluster'] = db.labels_
-
-# Identify anomalies (points labeled as -1)
 combined_df['anomaly_dbscan'] = combined_df['cluster'] == -1
 
-# Apply Isolation Forest for anomaly detection
-iso_forest = IsolationForest(contamination=0.1, random_state=42)
-combined_df['anomaly_iso_forest'] = iso_forest.fit_predict(features_scaled) == -1
+
+# dropped isolation forest algo due to high complexity n non understandable results
+
+
+# best_contamination = 0.01
+# best_score = -1
+
+# for contamination in range(1, 100, 1):
+#     contamination = contamination / 100
+#     iso_forest = IsolationForest(contamination=contamination, random_state=42)
+#     iso_forest.fit(features_scaled)
+#     scores = iso_forest.decision_function(features_scaled)
+#     threshold = np.percentile(scores, 100 * contamination)
+#     anomalies = scores < threshold
+#     score = f1_score(combined_df['anomaly_dbscan'], anomalies)
+#     if score > best_score:
+#         best_score = score
+#         best_contamination = contamination
+
+# iso_forest = IsolationForest(contamination=best_contamination, random_state=42)
+# combined_df['anomaly_iso_forest'] = iso_forest.fit_predict(features_scaled) == -1
+
+# print(f'Best Isolation Forest contamination: {best_contamination}, F1 Score: {best_score}')
+
+# combined_df['anomaly'] = combined_df['anomaly_dbscan'] | combined_df['anomaly_iso_forest']
+
+# # Visualizing Anomalies Detected by Isolation Forest
+# plt.figure(figsize=(15, 8))
+# for product_id, product_df in combined_df.groupby('product_id'):
+#     plt.figure(figsize=(15, 8))  # Create a new figure for each product
+#     plt.plot(product_df.index, product_df['prices'], label=f'Price - {product_id}')
+#     plt.scatter(product_df.index[product_df['anomaly_iso_forest']], product_df['prices'][product_df['anomaly_iso_forest']], label=f'Isolation Forest Anomaly - {product_id}')
+#     plt.legend()
+#     plt.title(f'Price History with Isolation Forest Anomalies - {product_id}')
+#     plt.show()
+# plt.legend()
+# plt.title('Price History with Isolation Forest Anomalies')
+# plt.show()
+
 
 # Visualizing Anomalies Detected by DBSCAN
 plt.figure(figsize=(15, 8))
 for product_id, product_df in combined_df.groupby('product_id'):
+
     plt.figure(figsize=(15, 8))  # Create a new figure for each product
     plt.plot(product_df.index, product_df['prices'], label=f'Price - {product_id}')
+    plt.ylabel('Price')
+    plt.xlabel('Date')
+    plt.xticks(rotation=45, ha='right')
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%b'))
     plt.scatter(product_df.index[product_df['anomaly_dbscan']], product_df['prices'][product_df['anomaly_dbscan']], label=f'DBSCAN Anomaly - {product_id}')
     plt.legend()
     plt.title(f'Price History with DBSCAN Anomalies - {product_id}')
-    plt.show()
+    # Save the figure as a JPEG image
+    plt.savefig(f'results/res_dbscan_{product_id}.jpeg')
+    plt.close()
+    
 
-# Visualizing Anomalies Detected by Isolation Forest
-plt.figure(figsize=(15, 8))
-for product_id, product_df in combined_df.groupby('product_id'):
-    plt.figure(figsize=(15, 8))  # Create a new figure for each product
-    plt.plot(product_df.index, product_df['prices'], label=f'Price - {product_id}')
-    plt.scatter(product_df.index[product_df['anomaly_iso_forest']], product_df['prices'][product_df['anomaly_iso_forest']], label=f'Isolation Forest Anomaly - {product_id}')
-    plt.legend()
-    plt.title(f'Price History with Isolation Forest Anomalies - {product_id}')
-    plt.show()
-plt.legend()
-plt.title('Price History with Isolation Forest Anomalies')
-plt.show()
