@@ -1,6 +1,6 @@
-# Price History Analyzer
+# TrendShield
 
-The Price History Analyzer is a Chrome extension that provides users with the price history of products they are viewing. It retrieves the price history data from a designated website and analyzes it using a machine learning algorithm implemented in Python. The analyzed results are then displayed to the user through the extension.
+The TrendShield is a Chrome extension that provides users with the price history of products they are viewing. It retrieves the price history data from a designated website and analyzes it using a machine learning algorithm implemented in Python. The analyzed results are then displayed to the user through the extension.
 
 ## Features
 
@@ -19,7 +19,7 @@ To use the Price History Analyzer extension, you need to have the following:
 
 ## Usage
 
-1. Install the Price History Analyzer Chrome extension from the Chrome Web Store.
+1. Install the TrendShield Chrome extension from the Chrome Web Store.
 2. Navigate to a product page on a supported website.
 3. The extension will automatically retrieve the price history data for the product.
 4. The machine learning algorithm will analyze the data and generate insights.
@@ -37,7 +37,7 @@ To use the Price History Analyzer extension, you need to have the following:
 
 ## Disclaimer
 
-The Price History Analyzer extension is provided for informational purposes only. The analyzed results should not be considered as financial or investment advice. Users are advised to conduct their own research and make informed decisions based on their individual circumstances.
+The TrendShield extension is provided for informational purposes only. The analyzed results should not be considered as financial or investment advice. Users are advised to conduct their own research and make informed decisions based on their individual circumstances.
 
 ## License
 
